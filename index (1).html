@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>수능 시험 도우미</title>
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #2b4f2e;
+      /* 더 어두운 녹색 배경 */
+      color: white;
+      /* 흰색 글씨 */
+      font-family: 'Arial', sans-serif;
+      /* 부드러운 글씨 폰트 */
+      font-size: 20px;
+      /* 글씨 크기 키움 */
+      transition: background-color 0.5s;
+      /* 배경색 전환 애니메이션 */
+      position: relative;
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      width: 90%;
+      max-width: 1200px;
+    }
+
+    .schedule {
+      flex: 1;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .schedule h2 {
+      margin: 0;
+      padding: 0;
+      font-size: 2em;
+      /* 제목 글씨 크기 키움 */
+    }
+
+    .schedule ul {
+      margin: 0;
+      padding: 0;
+      list-style-type: none;
+    }
+
+    .schedule li {
+      margin: 10px 0;
+      font-size: 1.5em;
+      /* 목록 글씨 크기 키움 */
+    }
+
+    .clock-container {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+    }
+
+    canvas {
+      background-color: #2b4f2e;
+      /* 초록색 배경 */
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+    }
+
+    .countdown {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5em;
+      display: none;
+      color: white;
+    }
+
+    .title {
+      position: absolute;
+      top: 10px;
+      font-size: 2.5em;
+      text-align: center;
+      width: 100%;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 2em;
+      }
+
+      .schedule h2 {
+        font-size: 1.5em;
+      }
+
+      .schedule li {
+        font-size: 1.2em;
+      }
+
+      .countdown {
+        font-size: 4em;
+      }
+
+      canvas {
+        max-width: 300px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .container {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .schedule,
+      .clock-container {
+        width: 100%;
+        text-align: center;
+      }
+
+      .title {
+        font-size: 1.5em;
+      }
+
+      .schedule h2 {
+        font-size: 1.2em;
+      }
+
+      .schedule li {
+        font-size: 1em;
+      }
+
+      .countdown {
+        font-size: 3em;
+      }
+
+      canvas {
+        max-width: 200px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="title">수능 시험 도우미</div>
+  <div class="container">
+    <div class="schedule">
+      <h2>시험 시간표</h2>
+      <ul>
+        <li onclick="setTime(8, 40, 80)">국어: 08:40 - 10:00</li>
+        <li onclick="setTime(10, 30, 100)">수학: 10:30 - 12:10</li>
+        <li onclick="setTime(13, 10, 70)">영어: 13:10 - 14:20</li>
+        <li onclick="setTime(14, 50, 107)">한국사, 탐구(사회·과학·직업): 14:50 - 16:37</li>
+        <li onclick="setTime(14, 50, 30)">한국사: 14:50 - 15:20</li>
+        <li onclick="setTime(15, 20, 15)">탐구 영역 문항지 배부: 15:20 - 15:35</li>
+        <li onclick="setTime(15, 35, 30)">탐구1: 15:35 - 16:05</li>
+        <li onclick="setTime(16, 5, 2)">문제지 회수: 16:05 - 16:07</li>
+        <li onclick="setTime(16, 7, 30)">탐구2: 16:07 - 16:37</li>
+        <li onclick="setTime(17, 5, 40)">제2외국어/한문: 17:05 - 17:45</li>
+      </ul>
+    </div>
+    <div class="clock-container">
+      <canvas id="canvas" width="400" height="400"></canvas>
+    </div>
+  </div>
+  <div id="countdown" class="countdown">3</div>
+  <script>
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    const radius = canvas.height / 2;
+    context.translate(radius, radius);
+    const clockRadius = radius * 0.9;
+    let offset = 0;
+    let duration = 0;
+    let countdownTimer;
+    let clockInterval;
+    let countdownInterval;
+
+    function setTime(hour, minute, durationInMinutes) {
+      clearInterval(countdownTimer);
+      clearInterval(clockInterval);
+      clearInterval(countdownInterval);
+      document.body.style.backgroundColor = '#2b4f2e'; // 기본 배경색으로 재설정
+      offset = (hour % 12) * 3600 + minute * 60;
+      duration = durationInMinutes * 60;
+      const countdown = document.getElementById('countdown');
+      let countdownValue = 3;
+      countdown.style.display = 'block';
+      countdown.textContent = countdownValue;
+
+      countdownInterval = setInterval(() => {
+        countdownValue--;
+        countdown.textContent = countdownValue;
+        if (countdownValue === 0) {
+          clearInterval(countdownInterval);
+          countdown.style.display = 'none';
+          startClock();
+        }
+      }, 1000);
+    }
+
+    function startClock() {
+      clearInterval(clockInterval);
+      clockInterval = setInterval(() => {
+        offset += 1;
+        drawClock();
+      }, 1000);
+    }
+
+    function drawClock() {
+      context.clearRect(-radius, -radius, canvas.width, canvas.height);
+      drawWatchBody(context, clockRadius);
+      drawFace(context, clockRadius);
+      drawNumbers(context, clockRadius);
+      drawTime(context, clockRadius);
+    }
+
+    function drawWatchBody(context, radius) {
+      context.beginPath();
+      context.arc(0, 0, radius + 20, 0, 2 * Math.PI);
+      context.fillStyle = 'black';
+      context.fill();
+    }
+
+    function drawFace(context, radius) {
+      context.beginPath();
+      context.arc(0, 0, radius, 0, 2 * Math.PI);
+      context.fillStyle = 'white';
+      context.fill();
+      context.strokeStyle = 'black';
+      context.lineWidth = radius * 0.1;
+      context.stroke();
+      context.beginPath();
+      context.arc(0, 0, radius * 0.1, 0, 2 * Math.PI);
+      context.fillStyle = 'black';
+      context.fill();
+    }
+
+    function drawNumbers(context, radius) {
+      let ang;
+      let num;
+      context.font = radius * 0.15 + "px Arial";
+      context.textBaseline = "middle";
+      context.textAlign = "center";
+      for (num = 1; num < 13; num++) {
+        ang = num * Math.PI / 6;
+        context.rotate(ang);
+        context.translate(0, -radius * 0.85);
+        context.rotate(-ang);
+        context.fillText(num.toString(), 0, 0);
+        context.rotate(ang);
+        context.translate(0, radius * 0.85);
+        context.rotate(-ang);
+      }
+    }
+
+    function drawTime(context, radius) {
+      const hour = Math.floor(offset / 3600) % 12;
+      const minute = Math.floor((offset % 3600) / 60);
+      const second = offset % 60;
+      //hour
+      const hourPos = (hour * Math.PI / 6) + (minute * Math.PI / (6 * 60)) + (second * Math.PI / (360 * 60));
+      drawHand(context, hourPos, radius * 0.5, radius * 0.07);
+      //minute
+      const minutePos = (minute * Math.PI / 30) + (second * Math.PI / (30 * 60));
+      drawHand(context, minutePos, radius * 0.8, radius * 0.07);
+      // second
+      const secondPos = (second * Math.PI / 30);
+      drawHand(context, secondPos, radius * 0.9, radius * 0.02);
+    }
+
+    function drawHand(context, pos, length, width) {
+      context.beginPath();
+      context.lineWidth = width;
+      context.lineCap = "round";
+      context.moveTo(0, 0);
+      context.rotate(pos);
+      context.lineTo(0, -length);
+      context.stroke();
+      context.rotate(-pos);
+    }
+
+    setInterval(drawClock, 1000);
+    drawClock();
+  </script>
+</body>
+
+</html>
